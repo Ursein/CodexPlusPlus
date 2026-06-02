@@ -148,6 +148,7 @@ type RelayProfile = {
   contextWindow: string;
   autoCompactLimit: string;
   modelList: string;
+  modelAliases: string;
   userAgent: string;
 };
 
@@ -480,6 +481,7 @@ const defaultSettings: BackendSettings = {
       contextWindow: "",
       autoCompactLimit: "",
       modelList: "",
+      modelAliases: "",
       userAgent: "",
     },
   ],
@@ -2913,6 +2915,16 @@ function RelayProfileEditor({
             />
           </Field>
         ) : null}
+        {showApiFields ? (
+          <Field className="relay-field-model-aliases" label="模型别名映射">
+            <Textarea
+              value={profile.modelAliases}
+              onChange={(event) => updateDraft({ modelAliases: event.currentTarget.value })}
+              placeholder={"codex-auto-review=deepseek-chat\n每行一个 from=to 映射"}
+              rows={3}
+            />
+          </Field>
+        ) : null}
       </div>
       {showApiFields && profile.protocol === "chatCompletions" ? (
         <div className="hint-line relay-protocol-hint">
@@ -4220,6 +4232,7 @@ function normalizeSettings(settings: BackendSettings): BackendSettings {
             contextWindow: "",
             autoCompactLimit: "",
             modelList: "",
+            modelAliases: "",
             userAgent: "",
           },
         ];
@@ -4797,6 +4810,7 @@ function createRelayProfile(settings: BackendSettings): RelayProfile {
     contextWindow: "",
     autoCompactLimit: "",
     modelList: "",
+    modelAliases: "",
     userAgent: "",
   };
   return withGeneratedRelayFiles(next);

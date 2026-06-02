@@ -423,6 +423,29 @@ pub fn is_models_proxy_path(path: &str) -> bool {
     )
 }
 
+/// 应用模型别名映射。
+/// modelAliases 格式：每行 `源模型名=目标模型名`，例：`codex-auto-review=deepseek-chat`
+fn apply_model_aliases(body: &mut Value, aliases: &str) {
+    let model = match body.get("model").and_then(Value::as_str) {
+        Some(m) => m.to_string(),
+        None => return,
+    };
+    for line in aliases.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() || trimmed.starts_with('#') {
+            continue;
+        }
+        if let Some((from, to)) = trimmed.split_once('=') {
+            let from = from.trim();
+            let to = to.trim();
+            if !from.is_empty() && model == from {
+                body["model"] = json!(to);
+                break;
+            }
+        }
+    }
+}
+
 pub async fn open_responses_proxy_request(body: &str) -> anyhow::Result<UpstreamProxyResponse> {
     let settings = SettingsStore::default().load().unwrap_or_default();
     let relay = settings.active_relay_profile();
@@ -441,7 +464,10 @@ pub async fn open_responses_proxy_request(body: &str) -> anyhow::Result<Upstream
         .get("stream")
         .and_then(Value::as_bool)
         .unwrap_or(false);
-    let chat_request = responses_to_chat_completions(request_json.clone())?;
+    let mut chat_request = responses_to_chat_completions(request_json.clone())?;
+    if !relay.model_aliases.trim().is_empty() {
+        apply_model_aliases(&mut chat_request, &relay.model_aliases);
+    }
     let client = crate::http_client::proxied_client(&relay.user_agent)?;
     let upstream = client
         .post(chat_completions_url(&relay.base_url))
@@ -516,7 +542,10 @@ pub async fn open_chat_completions_proxy_request(
         anyhow::bail!("Chat Completions 上游 Key 不能为空");
     }
 
-    let request_json: Value = serde_json::from_str(body)?;
+    let mut request_json: Value = serde_json::from_str(body)?;
+    if !relay.model_aliases.trim().is_empty() {
+        apply_model_aliases(&mut request_json, &relay.model_aliases);
+    }
     let is_stream = request_json
         .get("stream")
         .and_then(Value::as_bool)

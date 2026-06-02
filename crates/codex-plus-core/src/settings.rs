@@ -83,6 +83,8 @@ pub struct RelayProfile {
         skip_serializing_if = "String::is_empty"
     )]
     pub user_agent: String,
+    #[serde(rename = "modelAliases", default)]
+    pub model_aliases: String,
 }
 
 impl Default for RelayProfile {
@@ -109,6 +111,7 @@ impl Default for RelayProfile {
             model_insert_mode: RelayModelInsertMode::Patch,
             model_list: String::new(),
             user_agent: String::new(),
+            model_aliases: String::new(),
         }
     }
 }
@@ -286,6 +289,7 @@ impl BackendSettings {
                 model_insert_mode: RelayModelInsertMode::Patch,
                 model_list: String::new(),
                 user_agent: String::new(),
+                model_aliases: String::new(),
             };
         }
 
@@ -331,6 +335,7 @@ impl BackendSettings {
             model_insert_mode: RelayModelInsertMode::Patch,
             model_list: String::new(),
             user_agent: String::new(),
+            model_aliases: String::new(),
         }
     }
 }
